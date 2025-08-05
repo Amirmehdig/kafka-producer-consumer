@@ -1,4 +1,11 @@
-name: kafka
+name: aggregate-adder
+
+volumes:
+  kafka_data:
+
+networks:
+  kafka-network:
+    driver: bridge
 
 services:
   kafka:
@@ -11,12 +18,33 @@ services:
       - KAFKA_CFG_PROCESS_ROLES=controller,broker
       - KAFKA_CFG_CONTROLLER_QUORUM_VOTERS=0@kafka:9093
       - KAFKA_CFG_LISTENERS=PLAINTEXT://:9092,CONTROLLER://:9093
-      - KAFKA_CFG_ADVERTISED_LISTENERS=PLAINTEXT://localhost:9092
+      - KAFKA_CFG_ADVERTISED_LISTENERS=PLAINTEXT://kafka:9092
       - KAFKA_CFG_CONTROLLER_LISTENER_NAMES=CONTROLLER
       - KAFKA_CFG_INTER_BROKER_LISTENER_NAME=PLAINTEXT
       - KAFKA_CFG_AUTO_CREATE_TOPICS_ENABLE=true
     volumes:
       - kafka_data:/bitnami/kafka
+    networks:
+      - kafka-network
 
-volumes:
-  kafka_data:
+  producer:
+    container_name: kafka_producer
+    build:
+      context: ../producer
+    env_file:
+      - ../.env
+    depends_on:
+      - kafka
+    networks:
+      - kafka-network
+
+  consumer:
+    container_name: kafka_consumer
+    build:
+      context: ../consumer
+    env_file:
+      - ../.env
+    depends_on:
+      - producer
+    networks:
+      - kafka-network
