@@ -20,14 +20,13 @@ public class NumberProducerRoute extends RouteBuilder {
     @Override
     public void configure() {
         String fromUri = "timer:numberProducerRoute?period=" + interval * 1000;
-        String toUri = "kafka:random-numbers?brokers=" + broker;
         from(fromUri)
                 .process(exchange -> {
                     int number = random.nextInt(101);
                     exchange.getIn().setBody(number);
                     exchange.getIn().setHeader("kafka.KEY", "default-partition");
                 })
-                .to(toUri)
+                .to(broker)
                 .log("Sent ${body}");
     }
 }
